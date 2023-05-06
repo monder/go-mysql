@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 
 	. "github.com/go-mysql-org/go-mysql/mysql"
 )
@@ -104,7 +104,11 @@ func (e *TransactionPayloadEvent) decodePayload() error {
 			e.CompressionType, e.compressionType())
 	}
 
-	payloadUncompressed, err := zstd.Decompress(nil, e.Payload)
+	decoder, err := zstd.NewReader(nil, zstd.WithDecoderConcurrency(0))
+	if err != nil {
+		return err
+	}
+	payloadUncompressed, err := decoder.DecodeAll(e.Payload, nil)
 	if err != nil {
 		return err
 	}
